@@ -1,0 +1,114 @@
+
+from langchain.text_splitter import CharacterTextSplitter
+#from langchain.text_splitter import WordTextSplitter
+from langchain.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+#from langchain.llms import OpenAI
+
+
+from langchain_community.document_loaders import PyPDFLoader
+#from langchain.text_splitter import CharacterTextSplitter
+#from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+
+#from langchain_community.vectorstores import Chroma
+
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_mistralai import ChatMistralAI
+import pandas as pd
+from io import StringIO
+
+
+
+def query_pdf(query):
+    # Load document using PyPDFLoader document loader
+    loader = PyPDFLoader("djangoproject.pdf")
+    documents = loader.load()
+    # Split document in chunks
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=30, separator="\n")
+    docs = text_splitter.split_documents(documents=documents)
+
+    
+    from langchain_nomic.embeddings import NomicEmbeddings
+    embeddings = NomicEmbeddings(model='nomic-embed-text-v1',nomic_api_key='nk-TgPc80e4hnQygVY38dwUgjRuT-uKxzPhtV26IeIIRcc')
+    print("Embeddings: ",embeddings)
+
+
+    # Create vectors
+    vectorstore = FAISS.from_documents(docs, embeddings)
+    # Persist the vectors locally on disk
+    vectorstore.save_local("faiss_index_machine")
+
+    # Load from local storage
+    persisted_vectorstore = FAISS.load_local("faiss_index_machine", embeddings,allow_dangerous_deserialization=True)
+
+
+    models_llm = ChatMistralAI(model="open-mistral-7b",
+                              temperature=0, 
+                              api_key='Y4z5XmbVZvcwnbwD4v20WYTPZyE7yq4B')
+
+
+    # Use RetrievalQA chain for orchestration
+    qa = RetrievalQA.from_chain_type(llm=models_llm, chain_type="stuff", retriever=persisted_vectorstore.as_retriever())
+    result = qa.run(query)
+    print(result)
+
+
+template = """Answer the question based only on the following context:
+{context}
+
+Question: {question}
+"""
+prompt = ChatPromptTemplate.from_template(template)
+
+model = models_llm
+
+chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt
+    | model
+    | StrOutputParser()
+)
+
+print(chain.invoke("What bank failed in North Carolina?"))
+
+
+
+def main():
+    query = input("Type in your query: \n")
+    while query != "exit":
+        query_pdf(query)
+        query = input("Type in your query: \n")
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+import gradio as gr
+from fastapi import FastAPI
+from mangum import Mangum  # For AWS Lambda deployment
+
+# Define your Gradio interface
+def gradio_interface(query):
+    return f"Processed: {query}"  # Simplified for example
+
+interface = gr.Interface(fn=gradio_interface, inputs=gr.Textbox(), outputs=gr.Textbox())
+
+# Create a FastAPI app
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+# Add Gradio interface as an endpoint
+@app.post("/gradio")
+async def gradio_endpoint(data: dict):
+    query = data.get("query")
+    return {"result": gradio_interface(query)}
+
+# Deploy with Mangum if using AWS Lambda
+handler = Mangum(app)
