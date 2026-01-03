@@ -1,0 +1,1318 @@
+
+
+https://skphd.medium.com/basic-nlp-interview-questions-and-answers-812289ed2be6
+
+https://skphd.medium.com/interview-questions-and-answers-on-retrieval-augmented-generation-rag-f5fb7b5b8228
+
+https://ai.plainenglish.io/top-100-ai-agent-interview-questions-0b32d604a80f
+
+https://medium.com/@tahirbalarabe2/%EF%B8%8Flangchain-vs-langgraph-a-comparative-analysis-ce7749a80d9c
+
+https://medium.com/@gitmaxd/understanding-state-in-langgraph-a-comprehensive-guide-191462220997
+
+https://medium.com/data-science/ai-agent-workflows-a-complete-guide-on-whether-to-build-with-langgraph-or-langchain-117025509fa0
+
+https://medium.com/@mehmood9501/advanced-querying-techniques-with-chromadb-and-python-beyond-simple-retrieval-c189a228c0a3
+
+https://modelcontextprotocol.io/docs/concepts/architecture#core-components
+
+https://testguild.com/top-model-context-protocols-mcp/
+
+
+=============================================================================================================================
+Chat models are language models that use a sequence of messages as inputs and return messages as outputs
+ (as opposed to using plain text). These are generally newer models.
+
+Langfuse also allows for logging LLM call traces and provides detailed information about execution time and call costs. 
+To integrate it with Langchain, you need to explicitly define the callback handler in Langchain or use the observe decorator,
+ which monitors everything executed within the function it is applied to
+
+from langfuse.decorators import langfuse_context, observe
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains.question_answering import load_qa_chain
+ 
+prompt = langfuse.get_prompt("question_and_answer")
+langchain_prompt = ChatPromptTemplate.from_messages(
+    prompt.get_langchain_prompt()
+)
+
+@observe()
+def generate_response(llm_model, query, chunks, model_kwargs):
+    langfuse_handler = langfuse_context.get_current_langchain_handler()
+
+    llm = ChatOpenAI(model=llm_model, **model_kwargs)
+    chain = load_qa_chain(
+        llm=llm,
+        chain_type="stuff",
+        prompt=langchain_prompt,
+        document_variable_name="context"
+    )
+
+    response = chain.invoke(
+        {"input_documents": chunks, "question": query},
+        config={"callbacks": [langfuse_handler]}
+    )
+    return response
+
+generate_response(
+    "gpt-4o",
+    "What color is the riding hood?",
+    chunks,
+    model_kwargs={"temperature": 0.2}
+)
+The traces can be viewed as a list, similar to LangSmith, and can also be accessed for detailed inspection.
+==============================================
+To implement tracing in production with Langfuse, you need to integrate the Langfuse SDK into your application,
+ which will automatically capture traces of your Langchain executions, 
+creating nested observations for chains, LLMs, tools, and retrievers.
+ This allows you to monitor, analyze, and debug your LangChain applications with full observability.
+ You can also use the @observe() decorator for Python code to simplify tracing. 
+ Here's a more detailed breakdown:
+1. Install Required Libraries:
+Install the Langfuse SDK for your chosen language (Python, JS/TS).
+For Langchain integration, ensure you have the necessary Langchain callbacks set up. 
+2. Configure Your Environment:
+Set environment variables like LANGFUSE_HOST and LANGFUSE_PUBLIC_KEY to point to your Langfuse instance (either cloud or self-hosted). 
+If using a self-hosted instance, ensure your Docker Compose setup is configured correctly. 
+3. Integrate Langfuse into your code:
+Using Langchain Callbacks:
+If you're using Langchain, leverage the CallbackHandler to automatically capture traces of your Langchain components. 
+Using @observe decorator (Python):
+For simpler integration, use the @observe decorator to automatically trace functions and methods. 
+Manually create traces (advanced):
+For more control, use the low-level SDKs to manually create and nest trace objects. 
+4. Observe and Evaluate:
+Monitor in the Langfuse UI:
+Access the Langfuse dashboard to visualize your traces, including nested observations, latency, and other metrics. 
+Analyze Metrics:
+Track key metrics like cost, latency, and user feedback to assess your application's performance. 
+Evaluate with Datasets:
+Integrate with tools like UpTrain to evaluate your traces using datasets. 
+Add Scores:
+Use scores to track quality metrics at runtime or for human-in-the-loop evaluation. 
+5. Production Best Practices:
+Flush Events:
+In short-lived applications (serverless functions, etc.), ensure you flush events before the application exits to avoid losing data. 
+Batching:
+Adjust batching configurations for high-throughput applications to optimize performance. 
+Filter Spans (OpenTelemetry):
+If using OpenTelemetry, use the filterprocessor to selectively send spans to Langfuse. 
+Handle Errors:
+Implement error handling to gracefully manage issues with the Langfuse integration. 
+Use Trace IDs:
+Utilize trace IDs for distributed tracing and correlation. 
+Export Data:
+Leverage blob storage integrations (S3, GCS, Azure) to export traces for further analysis. 
+
+To implement tracing in production with Langfuse, you need to integrate the Langfuse SDK into your application,
+ which will automatically capture traces of your Langchain executions, 
+creating nested observations for chains, LLMs, tools, and retrievers. 
+This allows you to monitor, analyze, and debug your LangChain applications with full observability.
+ You can also use the @observe() decorator for Python code to simplify tracing. 
+Here's a more detailed breakdown:
+1. Install Required Libraries:
+Install the Langfuse SDK for your chosen language (Python, JS/TS).
+For Langchain integration, ensure you have the necessary Langchain callbacks set up. 
+2. Configure Your Environment:
+Set environment variables like LANGFUSE_HOST and LANGFUSE_PUBLIC_KEY to point to your Langfuse instance (either cloud or self-hosted). 
+If using a self-hosted instance, ensure your Docker Compose setup is configured correctly. 
+3. Integrate Langfuse into your code:
+Using Langchain Callbacks:
+If you're using Langchain, leverage the CallbackHandler to automatically capture traces of your Langchain components. 
+Using @observe decorator (Python):
+For simpler integration, use the @observe decorator to automatically trace functions and methods. 
+Manually create traces (advanced):
+For more control, use the low-level SDKs to manually create and nest trace objects. 
+4. Observe and Evaluate:
+Monitor in the Langfuse UI:
+Access the Langfuse dashboard to visualize your traces, including nested observations, latency, and other metrics. 
+Analyze Metrics:
+Track key metrics like cost, latency, and user feedback to assess your application's performance. 
+Evaluate with Datasets:
+Integrate with tools like UpTrain to evaluate your traces using datasets. 
+Add Scores:
+Use scores to track quality metrics at runtime or for human-in-the-loop evaluation. 
+5. Production Best Practices:
+Flush Events:
+In short-lived applications (serverless functions, etc.), ensure you flush events before the application exits to avoid losing data. 
+Batching:
+Adjust batching configurations for high-throughput applications to optimize performance. 
+Filter Spans (OpenTelemetry):
+If using OpenTelemetry, use the filterprocessor to selectively send spans to Langfuse. 
+Handle Errors:
+Implement error handling to gracefully manage issues with the Langfuse integration. 
+Use Trace IDs:
+Utilize trace IDs for distributed tracing and correlation. 
+Export Data:
+Leverage blob storage integrations (S3, GCS, Azure) to export traces for further analysis. 
+
+flushAt	The maximum number of events to batch up before sending.
+flush_interval, LANGFUSE_FLUSH_INTERVAL (s)	flushInterval (ms)	The maximum time to wait before sending a batch.
+if you want to send a batch immediately, you can call the flush method on the client.
+from langfuse import get_client
+ 
+# access the client directly
+ 
+langfuse = get_client()
+ 
+# Flush all pending observations
+ 
+langfuse.flush()
+
+
+
+
+
+environment variables (like LANGFUSE_HOST or LANGFUSE_BASEURL) are set.
+Tracing Configuration:
+Verify that your tracing configuration is set up correctly, enabling tracing in the desired environments. You can control this with the LANGFUSE_TRACING_ENABLED environment variable.
+Manual Flushing:
+If using short-lived applications, remember to manually flush events before the application exits to avoid data loss. 
+2. Monitor Key Metrics:
+LLM Security:
+Monitor for potential security risks like prompt injection, PII leakage, or harmful prompts. You can use Langfuse's security scores and model-based evaluations to detect these risks. 
+Latency:
+Track the latency of your LLM application, including the latency of individual security checks. This helps identify bottlenecks and areas for optimization. 
+Other Metrics:
+Monitor other relevant metrics such as throughput, error rates, and resource usage. 
+3. Configure Alerts:
+Thresholds:
+Set alert thresholds for specific metrics. For example, you might want to be alerted if the latency of a particular API call exceeds a certain threshold or if the number of errors surpasses a certain limit. 
+Alerting Channels:
+Configure how you want to be notified when alerts are triggered. This could be through email, Slack, or other integrated channels. 
+Alert Management:
+Langfuse's dashboard allows you to manage and track your alerts, providing insights into when and why alerts were triggered. 
+4. Utilize Langfuse Features:
+Dashboard:
+The Langfuse dashboard provides a centralized view of your application's performance, allowing you to monitor key metrics and analyze traces. 
+Evaluations:
+Use Langfuse's evaluation features to assess the quality and security of your LLM application. You can create custom evaluations or leverage Langfuse's built-in evaluation methods. 
+Tracing:
+Analyze detailed execution paths within your application to identify bottlenecks, errors, and areas for improvement. 
+5. Example Workflows:
+Manual Inspection:
+Regularly inspect traces in the Langfuse dashboard to manually investigate security issues or other anomalies.
+Automated Evaluations:
+Use Langfuse's model-based evaluations to automatically scan traces for security risks and other issues.
+Security Score Monitoring:
+Track security scores over time to assess the effectiveness of your security measures.
+Latency Analysis:
+Use Langfuse to dissect latency within traces, helping to identify performance bottlenecks. 
+==============================================
+Exact vector search guarantees precise results by comparing a query vector to every vector in the dataset, ensuring the closest matches are found. 
+This method is exhaustive and deterministic, meaning it always returns the same results for the same query.
+
+Weaviate is an open source vector database that stores both objects and vectors. This allows for combining vector search with structured filtering.
+
+Weaviate in a nutshell:
+
+Weaviate is an open source vector database.
+Weaviate allows you to store and retrieve data objects based on their semantic properties by indexing them with vectors.
+Weaviate can be used stand-alone (aka bring your vectors) or with a variety of modules that can do the vectorization for you 
+and extend the core capabilities.
+Weaviate has a GraphQL-API to access your data easily.
+Weaviate is fast (check our open source benchmarks).
+Weaviate in detail: Weaviate is a low-latency vector database with out-of-the-box support for different media types (text, images, etc.). 
+It offers Semantic Search, Question-Answer Extraction, Classification, Customizable Models (PyTorch/TensorFlow/Keras), etc. Built from scratch in Go, Weaviate stores both objects and vectors, allowing for combining vector search with structured filtering and the fault tolerance of a cloud-native database. 
+It is all accessible through GraphQL, REST, and various client-side programming languages.
+
+Fast queries
+Weaviate typically performs nearest neighbor (NN) searches of millions of objects in considerably less than 100ms. You can find more information on our benchmark page.
+
+Ingest any media type with Weaviate Modules
+Use State-of-the-Art AI model inference (e.g., Transformers) for accessing data (text, images, etc.) at search-and-query time to let Weaviate manage the process of vectorizing data for you - or provide your own vectors.
+
+Combine vector and scalar search
+Weaviate allows for efficient, combined vector and scalar searches. For example, "articles related to the COVID-19 pandemic published within the past 7 days." Weaviate stores both objects and vectors and ensures the retrieval of both is always efficient. There is no need for a third-party object storage.
+
+Real-time and persistent
+Weaviate lets you search through your data even if it's currently being imported or updated. In addition, every write is written to a Write-Ahead-Log (WAL) for immediately persisted writes - even when a crash occurs.
+
+Horizontal Scalability
+Scale Weaviate for your exact needs, e.g., maximum ingestion, largest possible dataset size, maximum queries per second, etc.
+
+High-Availability
+Is on our roadmap and will be released later this year.
+
+Cost-Effectiveness
+Very large datasets do not need to be kept entirely in-memory in Weaviate. At the same time, available memory can be used to increase the speed of queries. This allows for a conscious speed/cost trade-off to suit every use case.
+
+Graph-like connections between objects
+Make arbitrary connections between your objects in a graph-like fashion to resemble real-life connections between your data points. Traverse those connections using GraphQL.
+
+How does Weaviate work?
+Within Weaviate, all individual data objects are based on a class property structure where a vector represents each data object. You can connect data objects (like in a traditional graph) and search for data objects in the vector space.
+
+You can add data to Weaviate through the RESTful API end-points and retrieve data through the GraphQL interface.
+
+Weaviate's vector indexing mechanism is modular, and the current available plugin is the Hierarchical Navigable Small World (HNSW) multilayered graph.
+
+What are Weaviate modules?
+Weaviate modules are used to extend Weaviate's capabilities and are optional. There are Weaviate modules that automatically vectorize your content (i.e., *2vec) or extend Weaviate's capabilities (often related to the type of vectors you have.) You can also create your own modules. Click here to learn more about them.
+
+What is a vector database?
+If you work with data, you probably work with search engine technology. The best search engines are amazing pieces of software, but because of their core architecture, they come with limitations when it comes to finding the data you are looking for.
+
+Take for example the data object: { "data": "The Eiffel Tower is a wrought iron lattice tower on the Champ de Mars in Paris." }
+
+Storing this in a traditional search engine might leverage inverted indexes to index the data. This means that to retrieve the data, you need to search for "Eiffel Tower", "wrought iron lattice", or other exact phrases, to find it. But what if you have vast amounts of data, and you want the document about the Eiffel Tower, but you search for "landmarks in France"? Traditional search engines can't help you there, so this is where vector databases show their superiority.
+
+Weaviate uses vector indexing mechanisms at its core to represent the data. The vectorization modules (e.g., the NLP module) vectorize the above-mentioned data object in a vector-space where the data object sits near the text "landmarks in France". This means that Weaviate can't find a 100% match, but it will find a very close one, and return the result.
+
+The above example is for text (i.e., NLP), but you can use vector search for any machine learning model that vectorizes, like images, audio, video, genes, etc.
+
+To learn more about vector databases, check out our Gentle Introduction to Vector Databases.
+
+There are four main situations when you should consider using Weaviate.
+
+If you don't like the quality of results that your current search engine gives you. (With Weaviate you can search through your data semantically.)
+If you want to do textual and image similarity search with out-of-the-box state-of-the-art ML models. (Combine storing and querying of multiple media types in one Weaviate instance.)
+If you want to combine semantic (vector) and scalar search with a vector database taking milliseconds. (Weaviate stores both your objects and vectors and makes sure the retrieval of both is always efficient).
+If you need to scale your own machine learning models to production size. (HNSW algorithm and horizontally scalable support near-realtime database operations)
+If you need to classify large datasets fast and near-realtime. (kNN, zero-shot or contextual classification with out-of-the-box or custom ML models).
+
+Other database systems like Elasticsearch rely on inverted indexes, which makes search super fast. Weaviate also uses inverted indexes to store data and values. 
+
+But additionally, Weaviate is also a vector-native search database, which means that data is stored as vectors, which enables semantic search. 
+This combination of data storage is unique, and enables fast, filtered and semantic search from end-to-end.
+
+
+weviate database
+sandbox instancce
+cluster
+mycluster
+cluster provisiong(adding region)
+weviate adds a suffice to cluster names
+a client library to work with Weaviate
+pip install -U weaviate-client
+
+ Connect to Weaviate
+Now you can connect to your Weaviate instance. You will need the:
+
+REST Endpoint URL and the
+Administrator API Key.
+You can retrieve them both from the WCD console as shown in the interactive example below.
+
+New clusters with Weaviate version v1.30 (or later) have RBAC (Role-Based Access Control) enabled by default. 
+These clusters don't come with API keys, you will need to create an API key yourself and assign it a role (admin, viewer or a custom role).
+
+Once you have the REST Endpoint URL and the admin API key, you can connect to the Sandbox instance, and work with Weaviate.
+
+we can populate our database by first defining a collection and then adding data.
+A collection is a set of objects that share the same data structure
+Add objects
+We can now add data to our collection.
+
+The following example:
+
+Loads objects, and
+Adds objects to the target collection (Question) using a batch process.
+Batch imports
+(Batch imports) are the most efficient way to add large amounts of data, as it sends multiple objects in a single request. 
+semantic search finds results based on meaning. This is called nearText in Weaviate.
+
+
+Weaviate offers GraphQL and gRPC APIs for queries.
+
+We recommend using a Weaviate client library, which abstracts away the underlying API calls and makes it easier to integrate Weaviate into your application.
+
+However, you can query Weaviate directly using GraphQL with a POST request to the /graphql endpoint, or write your own gRPC calls based on the gRPC protobuf specification.
+GraphQL is a query language built on using graph data structures. 
+It is an efficient method of data retrieval and mutation, since it mitigates the common over-fetching and under-fetching problems of other query languages.
+GraphQL integer data currently only supports int32, and does not support int64. 
+This means that currently integer data fields in Weaviate with integer values larger than int32, will not be returned using GraphQL queries.
+
+
+Semantic search
+With Weaviate, you can perform semantic searches to find similar items based on their meaning. 
+This is done by comparing the vector embeddings of the items in the database.
+
+The results are based on similarity of the vector embeddings between the query and the database object text. 
+In this case, the embeddings are generated by the vectorizer module.
+
+The limit parameter here sets the maximum number of results to return.
+
+The return_metadata parameter takes an instance of the MetadataQuery class to set metadata to return in the search results. 
+The current query returns the vector distance to the query.
+
+The returned object is an instance of a custom class. Its objects attribute is a list of search results, 
+each object being an instance of another custom class.
+
+Each returned object will:
+
+Include all properties and its UUID by default except those with blob data types.
+Not include any other information (e.g. references, metadata, vectors.) by default.
+
+
+Weaviate handles data ingestion and updates through its API, primarily using batch imports for bulk data and individual object updates for more granular control. Batch imports improve performance by reducing network latency and allowing for parallel processing. Updates can be done via PUT or PATCH requests for full or partial object modifications, respectively. 
+Data Ingestion:
+Batch Imports:
+For importing large datasets, batch imports are highly recommended. This involves sending multiple objects in a single request, significantly improving speed and reducing network overhead. 
+Individual Object Creation:
+You can also create individual objects using the API, specifying properties and optionally an ID and vector representation. 
+Client Libraries:
+Weaviate offers client libraries (e.g., Python) that simplify the interaction with the API, making it easier to manage data ingestion and updates. 
+REST API:
+The Weaviate API, including the objects and batch endpoints, allows for both individual object creation and batch imports. 
+Data Updates:
+PUT (Replace):
+Use PUT requests to replace an entire object with new data. This requires providing all properties of the object in the request.
+PATCH (Partial Update):
+Use PATCH requests to update specific properties of an object without affecting the rest of the object's data. This is useful for making targeted changes.
+Batch Updates:
+While not explicitly mentioned in the provided search results, batch updates are likely supported via the batch API for multiple object modifications. 
+
+modules in weviate
+vectorizer, reader and generator modules, other modules, no modules
+
+
+
+=======================
+Pinecone offers advanced vector search and retrieval capabilities. There are two different ways you can use Pinecone:
+ using its serverless architecture or its pod architecture. Pinecone also supports advanced similarity search metrics such as dot product,
+ Euclidean distance, and cosine similarity. Using its pod architecture, you can leverage horizontal or vertical scaling. 
+Finally, Pinecone offers privacy and security features such as Role-Based Access Control (RBAC) and end-to-end encryption,
+ including encryption in transit and at rest.
+
+Pinecone offers a fully managed SaaS-only service. It handles the complexities of infrastructure management 
+such as scaling, performance optimization, and maintenance.
+
+Key Features of Pinecone Vector Database
+Fully Managed Service: Pinecone offers a fully managed SaaS-only service. It handles the complexities of infrastructure management such as scaling, performance optimization, and maintenance. Pinecone is designed for developers who want to focus on building AI applications without worrying about the underlying database infrastructure.
+Serverless and Pod Architecture: Pinecone offers two different architecture options to run their vector database - the serverless architecture and the pod architecture. Serverless architecture runs as a managed service on the AWS cloud platform, and allows automatic scaling based on workload. Pod architecture, on the other hand, provides pre-configured hardware units (pods) for hosting and executing services, and supports horizontal and vertical scaling. Pods can be run on AWS, GCP, or Azure.
+Advanced Similarity Search: Pinecone supports three different similarity search metrics – dot product, Euclidean distance, and cosine similarity. It currently does not support Manhattan distance metric.
+Privacy and Security Features: Pinecone offers Role-Based Access Control (RBAC), end-to-end encryption, and compliance with SOC 2 Type II and GDPR. Pinecone allows for the creation of “organization”, which, in turn, has “projects” and “members” with single sign-on (SSO) and access control.
+Hybrid Search and Sparse Vectors: Pinecone supports both sparse and dense vectors, and allows hybrid search. This gives developers the ability to combine semantic and keyword search in a single query.
+Metadata Filtering: Pinecone allows attaching key-value metadata to vectors in an index, which can later be queried. Semantic search using metadata filters retrieve exactly the results that match the filters.
+Pinecone’s fully managed service makes it a compelling choice for developers who’re looking for a vector database that comes without the headache of infrastructure management.
+
+For serverless indexes, Pinecone automatically handles scaling and throughput. To decrease latency, Pinecone suggests using namespaces to partition records within a single index. However, since Pinecone is a managed SaaS-only solution, developer control over performance and throughput is limited.
+
+To create and manage indexes in Pinecone, you'll first need to set up a Pinecone account and get an API key. You can then create indexes using either the Pinecone console or the Python client. To manage them, you can use commands to list, describe, configure, and delete indexes. 
+Creating Indexes:
+Account and API Key: Sign up for a Pinecone account and obtain your API key and environment. 
+Using the Console:
+Navigate to the Pinecone console.
+Select "Indexes" and click "Create Index".
+Choose between a serverless or pod-based index. 
+For serverless indexes, you'll specify the name, cloud, region, embedding model, and embedding field. 
+For pod-based indexes, you'll specify the name, dimensions, metric, environment, pod type, and pod size. 
+Using the Python Client:
+Install the Pinecone client: pip install pinecone-client. 
+Initialize Pinecone: pinecone.init(api_key="YOUR_API_KEY", environment="YOUR_ENVIRONMENT"). 
+Create the index: Use pinecone.create_index() with appropriate parameters (name, dimension, metric, etc.). 
+Managing Indexes:
+Listing Indexes: Use pinecone.list_indexes() to see all your indexes. 
+Describing Indexes: Use pinecone.describe_index("index_name") to get detailed information about a specific index. 
+Configuring Indexes:
+For serverless indexes, you can configure deletion protection and tags. 
+For pod-based indexes, you can configure pod size, replicas, tags, and deletion protection. 
+Use pinecone.configure_index("index_name", pod_type="...") to modify pod-based indexes. 
+Deleting Indexes: Use pinecone.delete_index("index_name") to remove an index and its data. 
+Targeting Indexes: When working with data operations (upsert, query), you can target an index by its host name for better performance. 
+Key Concepts:
+Serverless vs. Pod-based:
+Serverless indexes automatically scale, while pod-based indexes require you to manage the underlying resources (pods). 
+Namespaces:
+Indexes can be partitioned using namespaces, allowing you to logically separate data within a single index. 
+Index Statistics:
+Use pinecone.describe_index_stats("index_name") to get information about the index's contents, including vector count, dimension, and fullness (for pod-based indexes). 
+
+Metadata Filtering: Pinecone allows attaching key-value metadata to vectors in an index, which can later be queried. 
+Semantic search using metadata filters retrieve exactly the results that match the filters.
+
+Pinecone handles batch operations by allowing you to send multiple records (vectors and their metadata) 
+in a single request to the server, rather than sending them one at a time. 
+This significantly improves ingestion throughput and efficiency, especially when dealing with large datasets. 
+Here's how batching works in Pinecone:
+1. Upsert in Batches:
+For ongoing data ingestion, the upsert operation is used. It's recommended to upsert records in batches, 
+with each batch as large as possible (up to the maximum request size, which is 2MB, according to Pinecone). 
+2. Import for Large Datasets:
+For very large datasets (millions of records), using import can be more cost-effective than upsert. 
+3. Batch Size Limits:
+Pinecone has limits on the size of each batch (e.g., 2MB for upsert). It's crucial to check the official documentation
+ for the specific limits of the operation you're performing. 
+4. Parallel Batching:
+You can further optimize performance by sending multiple batches concurrently using parallel processing. 
+This can be achieved by initializing the Pinecone client with the pool_threads parameter and using asynchronous requests. 
+5. Data Structure:
+When using batch operations, you need to structure your data in a way that Pinecone can understand.
+ This usually involves creating a list of vectors and their corresponding metadata.
+ You can use helper functions to format your data into the correct structure. 
+
+
+
+In Pinecone, namespaces are logical partitions within an index that allow you to organize and manage your data into distinct subsets. 
+They act like folders within your index, enabling you to isolate and query different datasets independently. 
+You would use namespaces when you need to: 1) Implement multi-tenancy, separating data for different users or clients. 
+2) Improve query performance by limiting the search scope to a specific namespace.
+ 3) Simplify data management and potentially facilitate offboarding specific datasets. 
+Elaboration:
+Multi-tenancy:
+When dealing with multiple users or clients sharing the same Pinecone index, namespaces provide a clean way to isolate their data. Each user or client can be assigned their own namespace, ensuring that their data remains private and separate from others. This also simplifies tasks like deleting a tenant's data, as you can simply delete the corresponding namespace. 
+Improved Query Performance:
+By limiting queries to a specific namespace, you reduce the amount of data that needs to be scanned, leading to faster query times. This is especially beneficial when dealing with large datasets or when users are performing frequent queries. 
+Simplified Data Management:
+Namespaces make it easier to organize, manage, and query different subsets of your data. For example, you could use namespaces to separate data by content type (e.g., movies, books, academic papers) or by other logical groupings relevant to your application. 
+Example Scenario:
+A company using Pinecone to store customer data could create a namespace for each customer. This ensures that when a customer queries their own data, only their data within that specific namespace is searched, leading to faster and more secure results. 
+========================
+
+Chroma DB is an open-source vector store used for storing and retrieving vector embeddings.
+Its main use is to save embeddings along with metadata to be used later by large language models. 
+Additionally, it can also be used for semantic search engines over text data.
+
+Comprehensive retrieval features: Includes vector search, full-text search, document storage, metadata filtering, and multi-modal retrieval.
+How does Chroma DB work?
+First, you have to create a collection similar to the tables in the relations database. By default, Chroma converts the text into the embeddings using all-MiniLM-L6-v2, but you can modify the collection to use another embedding model.
+Add text documents with metadata and a unique ID to the newly created collection. When your collection receives the text, it automatically converts it into embedding.
+Query the collection by text or embedding to receive similar documents. You can also filter out results based on metadata.
+
+This code snippet is setting up a client to interact with a ChromaDB database using specific settings.
+
+
+Imports:
+
+
+
+import chromadb
+from chromadb.config import Settings
+
+These lines import the chromadb package and the Settings class from chromadb.config.
+
+
+Client Initialization:
+
+
+
+client = chromadb.Client(Settings(chroma_db_impl="duckdb+parquet",
+                                  persist_directory="db/"))
+
+This line creates a client object to interact with ChromaDB. It uses the Settings class to configure the database implementation to use duckdb+parquet and sets the directory for storing the database files to "db/".
+
+
+
+In summary, this code initializes a ChromaDB client with specific settings for database implementation and storage location.
+collection = client.create_collection(name="Students")
+
+Powered By 
+The code snippet collection = client.create_collection(name="Students") is used to create a new collection named "Students" in a database.
+
+
+Here's a breakdown:
+
+
+
+client is an instance of a database client, which is used to interact with the database.
+
+create_collection is a method of the client object that creates a new collection in the database.
+
+name="Students" specifies the name of the collection being created.
+
+
+Overall, this line of code creates a collection named "Students" in the database, which can be used to store and manage data related to students.
+
+collection.add(
+    documents = [student_info, club_info, university_info],
+    metadatas = [{"source": "student info"},{"source": "club info"},{'source':'university info'}],
+    ids = ["id1", "id2", "id3"]
+)
+
+Powered By 
+This code snippet adds documents to a collection with associated metadata and unique IDs.
+
+
+
+collection.add(...): This function call adds items to a collection.
+
+documents = [student_info, club_info, university_info]: This argument specifies a list of documents to be added. Each document is represented by a variable (student_info, club_info, university_info).
+
+metadatas = [{"source": "student info"},{"source": "club info"},{'source':'university info'}]: This argument provides metadata for each document. Each dictionary in the list contains metadata with a "source" key describing the document.
+
+ids = ["id1", "id2", "id3"]: This argument assigns unique IDs to each document.
+
+
+The code aims to add three documents to a collection, each with its own metadata and unique identifier.
+
+results = collection.query(
+    query_texts=["What is the student name?"],
+    n_results=2
+)
+
+results
+
+Powered By 
+The code snippet is querying a collection to find relevant results based on a given query text. Here's a breakdown:
+
+
+
+collection.query(...): This function is used to search within a collection of data.
+
+query_texts=["What is the student name?"]: This specifies the query you are searching for within the collection.
+
+n_results=2: This parameter limits the number of results returned to 2.
+
+
+to access Chroma vector stores you'll need to install the langchain-chroma integration package.
+
+pip install -qU "langchain-chroma>=0.1.2"
+
+Credentials
+You can use the Chroma vector store without any credentials, simply installing the package above is enough!
+
+If you want to get best in-class automated tracing of your model calls you can also set your LangSmith API key by uncommenting below:
+
+# os.environ["LANGSMITH_API_KEY"] = getpass.getpass("Enter your LangSmith API key: ")
+# os.environ["LANGSMITH_TRACING"] = "true"
+
+
+Initialization
+Basic Initialization
+Below is a basic initialization, including the use of a directory to save the data locally.
+
+Select embeddings model:
+import getpass
+import os
+
+if not os.environ.get("OPENAI_API_KEY"):
+  os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter API key for OpenAI: ")
+
+from langchain_openai import OpenAIEmbeddings
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+
+from langchain_chroma import Chroma
+
+vector_store = Chroma(
+    collection_name="example_collection",
+    embedding_function=embeddings,
+    persist_directory="./chroma_langchain_db",  # Where to save data locally, remove if not necessary
+)
+
+
+Initialization from client
+You can also initialize from a Chroma client, which is particularly useful if you want easier access to the underlying database.
+
+import chromadb
+
+persistent_client = chromadb.PersistentClient()
+collection = persistent_client.get_or_create_collection("collection_name")
+collection.add(ids=["1", "2", "3"], documents=["a", "b", "c"])
+
+vector_store_from_client = Chroma(
+    client=persistent_client,
+    collection_name="collection_name",
+    embedding_function=embeddings,
+)
+
+Manage vector store
+Once you have created your vector store, we can interact with it by adding and deleting different items.
+
+Add items to vector store
+We can add items to our vector store by using the add_documents function.
+
+from uuid import uuid4
+
+from langchain_core.documents import Document
+
+document_1 = Document(
+    page_content="I had chocolate chip pancakes and scrambled eggs for breakfast this morning.",
+    metadata={"source": "tweet"},
+    id=1,
+)
+
+document_2 = Document(
+    page_content="The weather forecast for tomorrow is cloudy and overcast, with a high of 62 degrees.",
+    metadata={"source": "news"},
+    id=2,
+)
+
+document_3 = Document(
+    page_content="Building an exciting new project with LangChain - come check it out!",
+    metadata={"source": "tweet"},
+    id=3,
+)
+
+document_4 = Document(
+    page_content="Robbers broke into the city bank and stole $1 million in cash.",
+    metadata={"source": "news"},
+    id=4,
+)
+
+document_5 = Document(
+    page_content="Wow! That was an amazing movie. I can't wait to see it again.",
+    metadata={"source": "tweet"},
+    id=5,
+)
+
+document_6 = Document(
+    page_content="Is the new iPhone worth the price? Read this review to find out.",
+    metadata={"source": "website"},
+    id=6,
+)
+
+document_7 = Document(
+    page_content="The top 10 soccer players in the world right now.",
+    metadata={"source": "website"},
+    id=7,
+)
+
+document_8 = Document(
+    page_content="LangGraph is the best framework for building stateful, agentic applications!",
+    metadata={"source": "tweet"},
+    id=8,
+)
+
+document_9 = Document(
+    page_content="The stock market is down 500 points today due to fears of a recession.",
+    metadata={"source": "news"},
+    id=9,
+)
+
+document_10 = Document(
+    page_content="I have a bad feeling I am going to get deleted :(",
+    metadata={"source": "tweet"},
+    id=10,
+)
+
+documents = [
+    document_1,
+    document_2,
+    document_3,
+    document_4,
+    document_5,
+    document_6,
+    document_7,
+    document_8,
+    document_9,
+    document_10,
+]
+uuids = [str(uuid4()) for _ in range(len(documents))]
+
+vector_store.add_documents(documents=documents, ids=uuids)
+
+=================================================
+LangSmith requires a license for commercial use, though it offers a robust free version.
+Langfuse can be self-hosted on your own servers or used under a paid license for managed services.
+
+setting up langsmith
+import os
+
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = "YOUR_LANGCHAIN_API_KEY"
+os.environ["LANGCHAIN_PROJECT"] = "default"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY"
+
+
+setting up langfuse
+clone the official langfuse repository
+cd langfuse
+docker compose up(Deploy the necessary services locally (a PostgreSQL database and Langfuse service) with Docker Compose:)
+create an account and a project
+open http://localhost:3000 in your browser.
+click sig up and create a new project
+generate api keys to connect code to langfuse
+import os
+
+os.environ["LANGFUSE_HOST"] = "http://localhost:3000"
+os.environ["LANGFUSE_PUBLIC_KEY"] = "YOUR_LANGFUSE_PUBLIC_KEY"
+os.environ["LANGFUSE_SECRET_KEY"] = "YOUR_LANGFUSE_SECRET_KEY"
+os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY"
+
+In LangSmith, the prompt versioning functionality allows you to maintain a history of the different prompts used for various tasks within an application. This prompt tracing enables access to different versions of the same prompt, storing them with tags, and more.
+
+Tracing LLM Calls
+Tracing refers to the logging of all user interactions with the LLM. 
+It’s a valuable feature because it allows you to monitor application usage, 
+identify frequent errors, or detect if a specific user is leveraging the application unusually often 
+(useful for spotting potential prompt hacking attempts). Tracing also provides insights into call durations, costs,
+ and overall performance.
+
+Additionally, traces can be “customized” by adding metadata (such as the LLM’s name) for each call. 
+This enables differentiation between various LLM use cases, such as generating embeddings,
+ calculating metrics, or producing responses. This way, each type of usage can be traced separately.
+
+Both LangSmith and Langfuse support this tracing functionality.
+===========================
+A vector is an array of numerical values that expresses the location of a floating point along several dimensions.
+Embeddings are vectors generated by neural networks. A typical vector database for a deep learning model is composed of embeddings
+A vector database uses a combination of different algorithms that all participate in Approximate Nearest Neighbor (ANN) search. 
+These algorithms optimize the search through hashing, quantization, or graph-based search.
+Standalone vector indices like FAISS (Facebook AI Similarity Search) can significantly improve the search and retrieval of vector embeddings,
+
+A vector database uses a combination of different algorithms that all participate in Approximate Nearest Neighbor (ANN) search.
+These algorithms optimize the search through hashing, quantization, or graph-based search.
+
+A vector database indexes and stores vector embeddings for fast retrieval and similarity search, with capabilities 
+like CRUD operations, metadata filtering, horizontal scaling, and serverless.
+
+LangChain
+
+There are two methods for working with LangChain: as a sequential chain of predefined commands or using LangChain agents. 
+Each approach is different in the way it handles tools and orchestration. 
+A chain follows a predefined linear workflow while an agent acts as a coordinator that can make more dynamic (non linear) decisions.
+
+Chains: A sequence of steps that can include calls to an llm, agent, tool, external data source, procedural code, and more. 
+Chains can branch, meaning a single chain to split into multiple paths based on logical conditions.
+Agents or Language Models: A Language Model has the ability to generate responses in natural language.
+ But the Agent uses a language model plus added capabilities to reason, call tools, and repeat the process of calling tools in case there are any failures.
+Tools: Code based functions that can be called in the chain or invoked by an agent to interact with external systems.
+Prompts: This can include a system prompt that instructs the model how to complete a task and what tools are available,
+ information injected from external data sources that provided the model more context, and the user prompt or task for the model to complete.
+LangGraph
+
+LangGraph approaches AI workflows from a different standpoint. Much like the name suggests, it orchestrates workflows like a graph.
+ Because of its flexibility in handling different flows between AI agents, procedural code, and other tools, it is better suited for 
+use cases where a linear chain method, branched chain, or simple agent system wouldn’t meet the needs of the use 
+LangGraph was designed to handle more complex conditional logic and feedback loops compared to LangChain.
+
+Graphs: A flexible way of organizing a workflow that can include calls to an llm, tool, external data source, procedural code, and more. 
+LangGraph supports cyclical graphs as well; which means you can create loops and feedback mechanisms so nodes can be revisited multiple times.
+Nodes: Represent steps in the workflow, such as an LLM query, an API call, or tool execution.
+Edges and Conditional Edges: Edges define the flow of information by connecting the output of one node as the input to the next.
+ A conditional edge defines the flow of information from one node to another if a certain condition is met. Developers can custom define these conditions.
+
+State: State is the current status of the application as information flows through the graph. 
+It is a developer defined mutable TypedDict object that contains all the relevant information for the current execution of the graph. 
+LangGraph automatically handles the updating of state at each node as information flows through the graph.
+Agents or Language Models: Language models within a graph are solely responsible for generating a text response to an input.
+The agent capability leverages a language model but enables the graph to have multiple nodes representing different components of the agent 
+(such as reasoning, tool selection, and execution of a tool). The agent can make decisions about which path to take in the graph,
+ update the state of the graph, and perform more tasks than just text generation.
+
+CrewAI: This framework focuses on defining roles for multiple AI agents to work collaboratively on tasks. 
+It's declarative in nature, where you specify what should be done rather than how. 
+However, this approach can limit the agent's ability to dynamically alter its strategy or adapt to unforeseen scenarios.
+
+- AutoGen: AutoGen allows for the creation of conversational agents with predefined behaviors. 
+It's effective for straightforward tasks but struggles with nuanced, multi-step processes where real-time decision-making is required.
+
+
+Let’s start with the simplest form of state in LangGraph:
+
+from typing import TypedDict
+
+class BasicState(TypedDict):
+    count: int
+This basic state definition creates a simple structure that can hold a single integer value, 
+though it could be any value. While it may seem elementary, this type of state can be incredibly useful in many scenarios, such as:
+
+Tracking the number of turns in a conversation
+Counting the occurrences of a specific event
+Maintaining a simple score, metric, or AI output
+
+2. Complex State Structures
+As we move into more realistic applications
+LangGraph allows us to create complex states that can hold various types of information:
+
+from typing import TypedDict, Annotated
+from langchain_core.messages import HumanMessage, AIMessage
+
+class ComplexState(TypedDict):
+    count: int
+    messages: Annotated[list[HumanMessage | AIMessage], add_messages]
+This complex state not only tracks a count but also maintains a list of messages. The Annotated type provides additional metadata that LangGraph uses for special handling of message lists (Tuples). This structure is particularly useful for:
+
+Chatbots that need to remember conversation history
+AI assistants that maintain context over multiple interactions
+Systems that need to track both quantitative (count) and qualitative (messages) data
+
+State Modification Functions
+Once we have our state structures defined, we need ways to modify them. In LangGraph, we typically create new state objects rather than modifying existing ones, adhering to the principles of immutability:
+
+def increment_count(state: BasicState) -> BasicState:
+    return BasicState(count=state["count"] + 1)
+
+def add_message(state: ComplexState, message: str, is_human: bool = True) -> ComplexState:
+    new_message = HumanMessage(content=message) if is_human else AIMessage(content=message)
+    return ComplexState(
+        count=state["count"],
+        messages=state["messages"] + [new_message]
+    )
+These functions demonstrate how we can:
+
+Increment a counter in our basic state
+Add new messages to our complex state, distinguishing between human and AI messages
+Create new state objects that reflect these changes
+4. Simple Graphs with State
+Now that we understand the basics of state and how to modify it, let’s see how we can use state in a LangGraph:
+
+from langgraph.graph import StateGraph, END
+
+def create_simple_graph():
+    workflow = StateGraph(BasicState)
+    
+    def increment_node(state: BasicState):
+        return {"count": state["count"] + 1}
+    
+    workflow.add_node("increment", increment_node)
+    workflow.set_entry_point("increment")
+    workflow.add_edge("increment", END)
+    
+    return workflow.compile()
+This simple graph demonstrates the fundamental structure of a LangGraph workflow:
+
+We create a StateGraph using our BasicState.
+We define a node function (increment_node) that modifies the state.
+We add this node to our graph and set it as the entry point.
+We create an edge from our node to the END of the graph.
+Finally, we compile our workflow.
+While this graph may seem basic, it serves as the foundation for more complex workflows.
+
+====================
+LLM security -langfuse-llm guard
+%pip install llm-guard "langfuse==2.60.8" openai
+
+ Get keys for your project from the project settings page
+# https://cloud.langfuse.com
+os.environ["LANGFUSE_PUBLIC_KEY"] = ""
+os.environ["LANGFUSE_SECRET_KEY"] = ""
+os.environ["LANGFUSE_HOST"] = "https://cloud.langfuse.com" # 🇪🇺 EU region
+# os.environ["LANGFUSE_HOST"] = "https://us.cloud.langfuse.com" # 🇺🇸 US region
+ from langfuse.decorators import observe, langfuse_context
+from langfuse.openai import openai # OpenAI integration
+from llm_guard.input_scanners import BanTopics
+ 
+violence_scanner = BanTopics(topics=["violence"], threshold=0.5)
+ 
+@observe()
+def story(topic: str):
+ 
+    sanitized_prompt, is_valid, risk_score = violence_scanner.scan(topic)
+ 
+    langfuse_context.score_current_observation(
+        name="input-violence",
+        value=risk_score
+    )
+ 
+    if(risk_score>0.4):
+        return "This is not child safe, please request another topic"
+ 
+    return openai.chat.completions.create(
+        model="gpt-4o",
+        max_tokens=100,
+        messages=[
+          {"role": "system", "content": "You are a great storyteller. Write a story about the topic that the user provides."},
+          {"role": "user", "content": topic}
+        ],
+    ).choices[0].message.content
+ 
+@observe()
+def main():
+    return story("war crimes")
+ 
+main()
+
+Lakera Guard is able to catch and block the prompt injection. 
+Langfuse can be used to trace these instances and ensure the security tool is performing as expected.
+LLM-Guard is a comprehensive tool designed to fortify the security of Large Language Models (LLMs).
+ By offering sanitization, detection of harmful language, prevention of data leakage, 
+and resistance against prompt injection and jailbreak attacks, LLM-Guard ensures that your
+ interactions with LLMs remain safe and secure.
+The three pillars of observability are logs, metrics, and traces. These three data outputs provide 
+different insights into the health and functions of systems in cloud and microservices environments
+
+====================
+What is LangServe and its purpose?
+langserve, a tool developed by langchain team, to streamline the deloy of langchain based models and applications easily.
+it uses fast api to provide an easy web server set up with features such as streaming outputs essential for handling eal time data streams,
+ batch processing, automatic schema geneartion,
+and support for multiple concurrent requests.
+
+Langserve provides us the user friendly playground, 
+to experiment with different configuartions and inputs , making it easy to test and refine our langchain applications.
+we can configure , model , temperature, top k
+
+simplified api serving
+by leveraging Fastapi and pydantic, langserve offers a robust solution 
+for serving APIs from langcahin applications,
+it privides remote APIs from core Langchain Expression Langauge Methods like invoke, batch and stream, simplying the process
+of making the fucntionality of the app available by API
+
+LangServe helps developers deploy LangChain runnables and chains as a REST API.
+
+This library is integrated with FastAPI and uses pydantic for data validation.
+
+In addition, it provides a client that can be used to call into runnables deployed on a server. 
+A JavaScript client is available in LangChain.js.
+
+===============================
+
+MCP (Model Context Protocol) changes that. 
+It gives AI agents a simple, standardized way to plug into tools, data, and services — no hacks, no hand-coding.
+Model Context Protocol (MCP) is an open standard developed by Anthropic, the company behind Claude. 
+While it may sound technical, but the core idea is simple: 
+give AI agents a consistent way to connect with tools, services, and data 
+
+The Model Context Protocol (MCP) framework incorporates various components that interact with each other and
+ leverage existing network protocols such as TCP, NFS, and HTTPS.
+
+MCP Host, Client, and Server
+MCP Host: The MCP host typically refers to the environment or platform where MCP is deployed and operates. 
+This could be the Workato platform that offers resources like API collections configured as MCP servers. 
+The host is responsible for facilitating the interaction between MCP clients and MCP servers.
+MCP Client: An MCP client is an entity, such as an application or agent, that utilizes the capabilities exposed by MCP servers. 
+These clients could be external agents like LLM-based clients (Claude, Cursor) or Workato agents. MCP clients request to perform 
+specific actions or gather data by invoking APIs hosted on MCP servers.
+MCP Server: MCP servers host the APIs that expose their capabilities in a configuration that MCP clients can discover and invoke. 
+These servers provide a standardized interface for clients to interact with various services or perform actions. 
+For example, an API collection can be configured as an MCP server on the Workato platform, 
+allowing clients to use it without additional configuration.
+
+
+=============
+
+s=['##ritika','sinha32']
+
+def counti(s):
+    for i in s:
+        coun=0
+        for a in i:
+            coun+=1
+        print(f"{i}:{coun}")
+combied=[]
+for ch in s:
+    combied+=ch
+print("combied",combied)
+
+alphas=[]
+for i in s:
+    for j in i:
+     if j.isalpha():
+        alphas+=j
+print("only letters",alphas)
+
+nums=[]
+for i in s:
+   for j in i:
+      if j.isnumeric():
+         nums+=j
+print("numbers",nums)
+
+specialcharaters=[]
+for i in s:
+   for j in i:
+      if not j.isalpha() and not j.isnumeric():
+         specialcharaters+=j
+print("special",specialcharaters)       
+
+# Sort in reverse alphabetical order
+alphas.sort(reverse=True)
+print("Letters in reverse alphabetical order:",alphas)
+
+for word in s:
+    reversed_alpha = ''
+    for ch in word:
+        if ch.isalpha():
+            reversed_alpha = ch + reversed_alpha 
+    print(f"Original: {word}, Reversed (letters only): {reversed_alpha}")
+
+def reverse_alphabetically(word):
+    letters = []
+    for ch in word:
+        if ch.isalpha():
+            letters.append(ch)
+
+    # Manual bubble sort in descending order
+    n = len(letters)
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            if letters[j] < letters[j + 1]:
+                letters[j], letters[j + 1] = letters[j + 1], letters[j]
+    
+    return ''.join(letters)
+
+# Apply function to each string
+for word in s:
+    sorted_letters = reverse_alphabetically(word)
+    print(f"Original: {word}, Reverse Alphabetically (letters only): {sorted_letters}")
+
+counti(s)
+
+================================================
+list =['ritika','sinha']
+
+def counti(list):
+    for i in list:
+        coun=0
+        for a in i:
+          coun+=1
+        print(f"{i}:{coun}")
+
+counti(list)
+
+#######################################################################
+
+def counti(list):
+    for i in list:
+        count=0
+        for a in i:
+                count+=1
+        print(f"{i}:{count}")
+    combinelist=[]
+    for j in list:
+        combinelist+=j
+    print("combine",combinelist)
+            
+counti(list)
+
+
+##############################################################################
+## count all charcters and combine and find frequency of each letter
+# lis=['sony','sinha']
+
+# def counti(lis):
+#     for i in lis:
+#         count=0
+#         sum=0
+#         for a in i:
+#             count+=1
+#         print(f"{i}:{count}")
+#     coun=0
+#     combinedlist=""
+#     for ch in lis:
+#         combinedlist+=ch
+#         coun+=1
+#     print("combiedlist",combinedlist)
+#     cou=0
+#     char_count={}
+#     for ch in combinedlist:
+#         if ch in char_count:
+
+#             char_count[ch]+=1
+#         else:
+#             char_count[ch]=1
+        
+#         cou+=1
+#     print("count",cou)
+
+#     for k in char_count:
+#         print (f"{k}:{char_count[k]}")
+             
+# counti(lis)
+
+######################################################################
+## sorting (bubble sort)
+# arr =[45,67,12,9,34,567,23]
+# def bubblesorts(arr):
+#     n=len(arr)
+#     for i in range(n):
+#         for j in range(0,n-i-1):
+#             if arr[j]>arr[j+1]:
+#                 arr[j+1],arr[j]=arr[j],arr[j+1]
+#     return arr
+
+# print(bubblesorts(arr))
+#################################################################3
+## flatten files
+
+# lists=[34,'sd',['sds','swe',87],[45,21],'rt']
+
+# def flatten(lists):
+#     flattenlist=[]
+#     for i in lists:
+#         if type(i) is list:
+#             for a in i:
+#                 flattenlist.append(a)
+#         else:
+#             flattenlist.append(i)
+#     return flattenlist
+
+# print(flatten(lists))
+
+###################################################
+
+mydict = {'mango': 45554, 'grapes': 512123, 'orange': 129872}
+
+# Get keys and values
+keys = list(mydict.keys())
+values = list(mydict.values())
+
+# Print counts
+print("Count of keys:", len(keys))
+print("Keys:", keys)
+print("Values:", values)
+
+# Bubble sort keys in descending lexicographical order
+def bubble_sort_keys_desc(keys_list):
+    n = len(keys_list)
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            if keys_list[j] < keys_list[j + 1]:  # Descending order
+                keys_list[j], keys_list[j + 1] = keys_list[j + 1], keys_list[j]
+    return keys_list
+
+# Bubble sort values in ascending order
+def bubble_sort_values_asc(values_list):
+    n = len(values_list)
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            if values_list[j] > values_list[j + 1]:
+                values_list[j], values_list[j + 1] = values_list[j + 1], values_list[j]
+    return values_list
+
+# Sort and print
+sorted_keys = bubble_sort_keys_desc(keys.copy())
+sorted_values = bubble_sort_values_asc(values.copy())
+
+print("Sorted keys (descending):")
+for k in sorted_keys:
+    print(k)
+
+print("Sorted values (ascending):")
+for v in sorted_values:
+    print(v)
+
+==
+Count of keys: 3
+Keys: ['mango', 'grapes', 'orange']
+Values: [45554, 512123, 129872]
+Sorted keys (descending):
+orange
+mango
+grapes
+Sorted values (ascending):
+45554
+129872
+512123
+
+=====================================================
+
+
+API response remains the same.
+
+Frontend can customize what and how the response is displayed (e.g., show a warning message instead of false).
+====================
+Google's Gemini also does not expose token counts for image inputs.
+
+Gemini Pro and Gemini 1.5 models handle images natively, and only report overall usage in API billing (not token-by-token).
+
+=======================================================================
+
+lis=['sony','sinha']
+
+def counti(lis):
+    for i in lis:
+        count=0
+        sum=0
+        for a in i:
+            count+=1
+        print(f"{i}:{count}")
+    coun=0
+    combinedlist=""
+    for ch in lis:
+        combinedlist+=ch
+        coun+=1
+    print("combiedlist",combinedlist)
+    cou=0
+    char_count={}
+    for ch in combinedlist:
+        if ch in char_count:
+
+            char_count[ch]+=1
+        else:
+            char_count[ch]=1
+        
+        cou+=1
+    print("count",cou)
+
+    for k in char_count:
+        print (f"{k}:{char_count[k]}")
+             
+counti(lis)
+
+
+============================================================================
+
+
+=========================================================================
+
+def sorting(arr):
+    n=len(arr)
+    for i in range(n):
+        for j in range(0,n-i-1):
+            if arr[j]>arr[j+1]:
+                arr[j],arr[j+1]=arr[j+1],arr[j]
+    return arr
+
+arr=[3,45,12,11,34,11,11,16]
+print(sorting(arr))
+
+output:
+[3, 11, 11, 11, 12, 16, 34, 45]
+
+======================================================================
+
+def flattenlist(lis):
+    flattenlist=[]
+    for a in lis:
+        if type(a) is list:
+            for b in a:
+                flattenlist.append(b)
+        else:
+            flattenlist.append(a)
+    return flattenlist
+
+lis =[23, ['a',2,'2'],23,['sony']]
+print(flattenlist(lis))
+
+
+====================================================================
+
+lis = [3, 3]
+
+def counti(lis):
+    count = 0
+    for i in lis:
+        if i == 3:
+            count += 1
+    return count
+
+print(counti(lis))
+==================================================================
+def counti(lis):
+    for i in lis:
+        count=0
+        for a in i:
+            count+=1
+        print(f"{i}:{count}")
+
+lis = ["sony", "sinha"]
+counti(lis)
+
+combibedarray=[]
+for i in lis:
+    for ch in i:
+     combibedarray+=ch
+
+print(combibedarray)
+
+char_count={}
+
+for ch in combibedarray:
+    if ch in char_count:
+        char_count[ch] += 1
+    else:
+        char_count[ch] = 1
+
+for k in char_count:
+   print(f"{k}:{char_count[k]}")
+
+=======================================================
+ if instaed of list 
+dict = {["mango": 124982, "apple":38561, "grapes":345743]}
+
+i want to count no of words in grapes, apple, and in mango and arrange them in reverse of alphabetical order, 
+and i want to arrange the values in decresing order and provide count of values  too
+
+python code for same, do not use inbuilt functions of python 
+
+=============================
+
+
+
+
+
