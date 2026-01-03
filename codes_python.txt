@@ -1,0 +1,194 @@
+data = ["a", "a", "b", "b", "b", "c", "c", "c",
+        "d", "e", "f", "g", "a", "b", "c", "d"]
+
+counts = {}
+unique_elements = []
+
+# Count occurrences
+for char in data:
+    if char not in counts:
+        counts[char] = 1
+        unique_elements.append(char)
+    else:
+        counts[char] += 1
+
+# Bubble sort by count (desc) and alphabet (asc for ties)
+n = len(unique_elements)
+for i in range(n):
+    for j in range(0, n - i - 1):
+
+        if counts[unique_elements[j]] < counts[unique_elements[j + 1]]:
+            unique_elements[j], unique_elements[j + 1] = (
+                unique_elements[j + 1],
+                unique_elements[j]
+            )
+
+        elif counts[unique_elements[j]] == counts[unique_elements[j + 1]]:
+            if unique_elements[j] > unique_elements[j + 1]:
+                unique_elements[j], unique_elements[j + 1] = (
+                    unique_elements[j + 1],
+                    unique_elements[j]
+                )
+
+# ✅ Convert to required output format
+result = []
+for char in unique_elements:
+    result.append((char, counts[char]))
+
+print(result)
+
+===
+
+## find second highest number
+def find_two_largest(numbers):
+    if len(numbers) == 2:
+        if numbers[0] > numbers[1]:
+            return numbers[0], numbers[1]
+        else:
+            return numbers[1], numbers[0]
+
+    first = numbers[0]
+    highest, second_highest = find_two_largest(numbers[1:])
+
+    if first > highest:
+        return first, highest
+    elif first > second_highest and first != highest:
+        return highest, first
+    else:
+        return highest, second_highest
+
+def get_result(nums):
+    highest, second = find_two_largest(nums)
+    return second
+
+nums = [5, 6, 27, 9, 20, 29]
+print(get_result(nums))
+
+
+===
+def is_balanced(s):
+    stack = []
+    mapping = {")": "(", "}": "{", "]": "["}
+
+    for char in s:
+        if char in mapping.values():
+            stack.append(char)
+        elif char in mapping:
+            if not stack or stack.pop() != mapping[char]:
+                return "false"
+
+    return "true" if not stack else "false"
+
+
+# ✅ PROVIDED INPUT
+input_str = "()[]{()}"
+
+print("Input:", input_str)
+print("Output:", is_balanced(input_str))
+
+====
+def count_letters(word:str):
+    counts = {}
+
+    # Step 1: Count letters
+    for char in input_string:
+        if char in counts:
+            counts[char] += 1
+        else:
+            counts[char] = 1
+
+    # Step 2: Sort manually by count (ascending)
+    keys = list(counts.keys())
+    n = len(keys)
+
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            if counts[keys[j]] > counts[keys[j + 1]]:
+                keys[j], keys[j + 1] = keys[j + 1], keys[j]
+
+    # Step 3: Create ordered dictionary
+    ordered_counts = {}
+    for k in keys:
+        ordered_counts[k] = counts[k]
+
+    return ordered_counts
+
+
+print(count_letters("banana"))
+=====
+
+def find_missing_number(nums):
+    n = len(nums) + 1
+    a = nums[0]
+    b = nums[-1]
+    expected_sum = (n * (a + b)) // 2
+    actual_sum = sum(nums)
+    return expected_sum - actual_sum
+
+print(find_missing_number([1, 2, 3, 5]))
+print(find_missing_number([100, 101, 103]))
+
+
+===
+
+def find_duplicates(nums):
+    seen = set()
+    duplicates = set()
+
+    for num in nums:
+        if num in seen:
+            duplicates.add(num)
+        else:
+            seen.add(num)
+
+    return list(duplicates)
+
+
+ar = [6, 7, 6, 7, 8]
+print(find_duplicates(ar))
+
+===
+def second_smallest(numbers):
+    first = second = float('inf')
+    for num in numbers:
+        if num < first:
+            second = first
+            first = num
+        elif num < second and num != first:
+            second = num
+    return second
+
+ar=[19,17,5,67,34, 87]
+print(second_smallest(ar))
+
+====
+def count_letters(word: str):
+    counts = {}
+
+    # Step 1: Count letters
+    for char in word:   # ✅ FIXED HERE
+        if char in counts:
+            counts[char] += 1
+        else:
+            counts[char] = 1
+
+    # Step 2: Sort manually by count (ascending)
+    keys = list(counts.keys())
+    n = len(keys)
+
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            if counts[keys[j]] > counts[keys[j + 1]]:
+                keys[j], keys[j + 1] = keys[j + 1], keys[j]
+
+    # Step 3: Create ordered dictionary
+    ordered_counts = {}
+    for k in keys:
+        ordered_counts[k] = counts[k]
+
+    return ordered_counts
+
+
+print(count_letters("banana"))
+
+
